@@ -1,8 +1,20 @@
+namespace SpriteKind {
+    export const shop_keeper = SpriteKind.create()
+}
+scene.onOverlapTile(SpriteKind.Player, tiles.util.door1, function (sprite, location) {
+    tiles.loadConnectedMap(ConnectionKind.Door1)
+    tiles.placeOnRandomTile(mySprite, assets.tile`myTile2`)
+    tiles.coverAllTiles(assets.tile`myTile2`, assets.tile`myTile`)
+    tiles.coverAllTiles(tiles.util.door1, assets.tile`myTile`)
+})
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     current_location = tiles.locationOfSprite(mySprite)
     if (tiles.tileIs(current_location, assets.tile`myTile0`)) {
         tiles.setTileAt(current_location, assets.tile`myTile1`)
     }
+})
+tiles.onMapLoaded(function (tilemap2) {
+    tiles.createSpritesOnTiles(assets.tile`myTile12`, SpriteKind.shop_keeper)
 })
 function closeinventory () {
     in_pause_screen = false
@@ -19,6 +31,88 @@ function open_inventory () {
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     selected_index = Math.min(selected_index + 1, tools.length - 1)
 })
+function shopkeppertalking (shopkeeper: Sprite) {
+    if (sprites.readDataBoolean(shopkeeper, "talking")) {
+        return
+    }
+    sprites.setDataBoolean(shopkeeper, "talking", true)
+    seed = get_random_seed()
+    story.startConveration(function () {
+        story.queueStoryPart(function () {
+            story.spriteSayText(shopkeeper, "HI THERE, YOUNG WIPPERSNAPPER")
+        })
+        story.queueStoryPart(function () {
+            story.spriteSayText(shopkeeper, "YOU NEED SOME SEEDS")
+        })
+        story.queueStoryPart(function () {
+            story.spriteSayText(shopkeeper, "I GOT ALL KINDS OF SEEDS.....")
+        })
+        story.queueStoryPart(function () {
+            story.spriteSayText(shopkeeper, "FAIR PRICE! COME AND GET'EM")
+        })
+        story.queueStoryPart(function () {
+            story.spriteSayText(shopkeeper, "today ive got some fesh seeds" + sprites.readDataString(seed, "wrong name") + "seeds!!!!!")
+        })
+        story.queueStoryPart(function () {
+            story.spriteSayText(shopkeeper, "its" + sprites.readDataNumber(seed, "price") + "for one or" + sprites.readDataNumber(seed, "price") * 10 + "for ten")
+        })
+        story.queueStoryPart(function () {
+            controller.moveSprite(mySprite, 0, 0)
+            story.showPlayerChoices("Buy one", "Buy ten", "No thanks")
+        })
+        story.queueStoryPart(function () {
+            if (story.checkLastAnswer("Buy one")) {
+                if (info.score() > sprites.readDataNumber(seed, "price")) {
+                    info.changeScoreBy(0 - sprites.readDataNumber(seed, "price"))
+                    story.spriteSayText(shopkeeper, "WONDERFULL IM SURE YOU'LL BE BACK FOR MORE.....")
+                    addseedtoinvetory(seed, 1)
+                } else if (info.score() == sprites.readDataNumber(seed, "price")) {
+                    info.changeScoreBy(0 - sprites.readDataNumber(seed, "price"))
+                    story.spriteSayText(shopkeeper, "WONDERFULL IM SURE YOU'LL BE BACK FOR MORE.....")
+                    addseedtoinvetory(seed, 10)
+                } else {
+                    story.spriteSayText(shopkeeper, "WELL BOO HOO FOR YOU HAHAHAHAH")
+                }
+            } else if (story.checkLastAnswer("Buy ten")) {
+                if (info.score() > sprites.readDataNumber(seed, "price") * 10) {
+                    story.spriteSayText(shopkeeper, "hehehe therz one born every minute")
+                    info.changeScoreBy(0 - sprites.readDataNumber(seed, "price") * 10)
+                } else if (info.score() == sprites.readDataNumber(seed, "price") * 10) {
+                    story.spriteSayText(shopkeeper, "hehehe therz one born every minute")
+                    info.changeScoreBy(0 - sprites.readDataNumber(seed, "price") * 10)
+                } else {
+                    story.spriteSayText(shopkeeper, "WELL BOO HOO FOR YOU HAHAHAHAH")
+                }
+            } else if (story.checkLastAnswer("No thanks")) {
+                story.spriteSayText(shopkeeper, "BAH, YOU'LL REGRET THIS FOR SURE TOMORROW IM SURE")
+            }
+            controller.moveSprite(mySprite, 100, 100)
+        })
+    })
+}
+sprites.onCreated(SpriteKind.shop_keeper, function (sprite) {
+    sprite.setImage(img`
+        b b b b b b b b b b b b b b b b . . 
+        b b b b b b b b b b b b b b b b . . 
+        b b b b b b b b b b b b b b b b . . 
+        b b 1 1 1 1 1 b b 1 1 1 1 1 b b . . 
+        b b 1 f f f 1 b b 1 f f f 1 b b . . 
+        b b 1 f f f 1 b b 1 f f f 1 b b . . 
+        b b 1 f f f 1 b b 1 f f f 1 b b . . 
+        b b 1 1 1 1 1 b b 1 1 1 1 1 b b . . 
+        b b b b b b b b b b b b b b b b . . 
+        b b b b b b b b b b b b b b b b . . 
+        b b b b b 1 d 1 d 1 b b b b b e e e 
+        b b b b d 1 d 1 d 1 d b b b b b . e 
+        b b b b b f f f f f b b b b b b . e 
+        b b b b b f f f f f b b b b b b . e 
+        b b b b d d d d d d d b b b b b . e 
+        b b b b b d d d d d b b b b b b . e 
+        `)
+})
+function addseedtoinvetory (seed: Sprite, amount: number) {
+    tools.push(seed.image)
+}
 controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
     if (in_pause_screen) {
         closeinventory()
@@ -26,6 +120,35 @@ controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
         open_inventory()
     }
 })
+function get_random_seed () {
+    seed_seed = randint(0, 0)
+    if (seed_seed == 0) {
+        new_seed = sprites.create(img`
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            . . . . . . . . . . . 5 . . . . 
+            . . . 5 . . . 5 . . . . . 2 . . 
+            . . . . . 2 . . . 2 . 2 . . . . 
+            . . 2 . . . . 2 . . . . . . . . 
+            . . . . . . . . . . . . 5 . . . 
+            . 5 . 2 . 2 . . . 5 . 2 . . . . 
+            . . . . . . . . 2 . . . . . . . 
+            `, SpriteKind.Player)
+        sprites.setDataString(new_seed, "name", "selfspreading")
+        sprites.setDataString(new_seed, "wrong name", "ponsettia")
+        sprites.setDataNumber(new_seed, "price", 10)
+    }
+    new_seed.setFlag(SpriteFlag.Invisible, true)
+    new_seed.setFlag(SpriteFlag.Ghost, true)
+    return new_seed
+}
 spriteutils.createRenderable(100, function (screen2) {
     if (in_pause_screen) {
         screen2.fillRect(10, 10, 140, 100, 13)
@@ -40,14 +163,23 @@ spriteutils.createRenderable(100, function (screen2) {
         }
     }
 })
+tiles.onMapUnloaded(function (tilemap2) {
+    sprites.destroyAllSpritesOfKind(SpriteKind.shop_keeper)
+})
 let tool_top = 0
+let new_seed: Sprite = null
+let seed_seed = 0
+let seed: Sprite = null
 let selected_index = 0
 let in_pause_screen = false
 let current_location: tiles.Location = null
 let tool_names: string[] = []
 let tools: Image[] = []
 let mySprite: Sprite = null
-tiles.setCurrentTilemap(tilemap`level2`)
+let farm_map = tiles.createMap(tilemap`level2`)
+let shop_map = tiles.createMap(tilemap`level10`)
+tiles.connectMapById(farm_map, shop_map, ConnectionKind.Door1)
+tiles.loadMap(farm_map)
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
     ................................................................................................................................................................
@@ -180,10 +312,10 @@ mySprite = sprites.create(img`
     b b 1 f f f 1 b b 1 f f f 1 b b 
     b b 1 1 1 1 1 b b 1 1 1 1 1 b b 
     b b b b b b b b b b b b b b b b 
+    b b b b b b b b b b b b b b b b 
+    b b b b b c e c e c b b b b b b 
+    b b b b e c e c e c e b b b b b 
     b b b b b f f f f f b b b b b b 
-    b b b b b f 2 2 2 f b b b b b b 
-    b b b b b f 2 2 2 f b b b b b b 
-    b b b b b f 3 3 3 f b b b b b b 
     b b b b b f f f f f b b b b b b 
     b b b b b b b b b b b b b b b b 
     b b b b b b b b b b b b b b b b 
@@ -193,6 +325,7 @@ scene.cameraFollowSprite(mySprite)
 tiles.placeOnRandomTile(mySprite, assets.tile`myTile2`)
 color.startFade(color.GrayScale, color.originalPalette)
 tiles.coverAllTiles(assets.tile`myTile2`, assets.tile`myTile`)
+tiles.coverAllTiles(tiles.util.door1, assets.tile`myTile`)
 tools = [
 img`
     . 4 4 4 4 . . . . . . . . . . . 
@@ -273,3 +406,20 @@ tool_names = [
 "shovel",
 "hoe"
 ]
+let tool_counts = [
+1,
+1,
+1,
+1
+]
+info.setScore(200)
+game.onUpdateInterval(100, function () {
+    for (let value of sprites.allOfKind(SpriteKind.shop_keeper)) {
+        if (spriteutils.distanceBetween(value, mySprite) < 40) {
+            shopkeppertalking(value)
+        } else if (spriteutils.distanceBetween(value, mySprite) < 70) {
+            sprites.setDataBoolean(value, "talking", false)
+            story.cancelCurrentConversation()
+        }
+    }
+})
