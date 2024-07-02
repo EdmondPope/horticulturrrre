@@ -1,8 +1,20 @@
+namespace SpriteKind {
+    export const shop_keeper = SpriteKind.create()
+}
+scene.onOverlapTile(SpriteKind.Player, tiles.util.door1, function (sprite, location) {
+    tiles.loadConnectedMap(ConnectionKind.Door1)
+    tiles.placeOnRandomTile(mySprite, assets.tile`myTile2`)
+    tiles.coverAllTiles(assets.tile`myTile2`, assets.tile`myTile`)
+    tiles.coverAllTiles(tiles.util.door1, assets.tile`myTile`)
+})
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     current_location = tiles.locationOfSprite(mySprite)
     if (tiles.tileIs(current_location, assets.tile`myTile0`)) {
         tiles.setTileAt(current_location, assets.tile`myTile1`)
     }
+})
+tiles.onMapLoaded(function (tilemap2) {
+    tiles.createSpritesOnTiles(assets.tile`myTile12`, SpriteKind.shop_keeper)
 })
 function closeinventory () {
     in_pause_screen = false
@@ -18,6 +30,26 @@ function open_inventory () {
 }
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     selected_index = Math.min(selected_index + 1, tools.length - 1)
+})
+sprites.onCreated(SpriteKind.shop_keeper, function (sprite) {
+    sprite.setImage(img`
+        b b b b b b b b b b b b b b b b 
+        b b b b b b b b b b b b b b b b 
+        b b b b b b b b b b b b b b b b 
+        b b 1 1 1 1 1 b b 1 1 1 1 1 b b 
+        b b 1 f f f 1 b b 1 f f f 1 b b 
+        b b 1 f f f 1 b b 1 f f f 1 b b 
+        b b 1 f f f 1 b b 1 f f f 1 b b 
+        b b 1 1 1 1 1 b b 1 1 1 1 1 b b 
+        b b b b b b b b b b b b b b b b 
+        b b b b b b b b b b b b b b b b 
+        b b b b b 1 d 1 d 1 b b b b b b 
+        b b b b d 1 d 1 d 1 d b b b b b 
+        b b b b b f f f f f b b b b b b 
+        b b b b b f f f f f b b b b b b 
+        b b b b d d d d d d d b b b b b 
+        b b b b b d d d d d b b b b b b 
+        `)
 })
 controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
     if (in_pause_screen) {
@@ -40,6 +72,9 @@ spriteutils.createRenderable(100, function (screen2) {
         }
     }
 })
+tiles.onMapUnloaded(function (tilemap2) {
+    sprites.destroyAllSpritesOfKind(SpriteKind.shop_keeper)
+})
 let tool_top = 0
 let selected_index = 0
 let in_pause_screen = false
@@ -47,7 +82,10 @@ let current_location: tiles.Location = null
 let tool_names: string[] = []
 let tools: Image[] = []
 let mySprite: Sprite = null
-tiles.setCurrentTilemap(tilemap`level2`)
+let farm_map = tiles.createMap(tilemap`level2`)
+let shop_map = tiles.createMap(tilemap`level10`)
+tiles.connectMapById(farm_map, shop_map, ConnectionKind.Door1)
+tiles.loadMap(farm_map)
 scene.setBackgroundImage(img`
     ................................................................................................................................................................
     ................................................................................................................................................................
@@ -180,10 +218,10 @@ mySprite = sprites.create(img`
     b b 1 f f f 1 b b 1 f f f 1 b b 
     b b 1 1 1 1 1 b b 1 1 1 1 1 b b 
     b b b b b b b b b b b b b b b b 
+    b b b b b b b b b b b b b b b b 
+    b b b b b c e c e c b b b b b b 
+    b b b b e c e c e c e b b b b b 
     b b b b b f f f f f b b b b b b 
-    b b b b b f 2 2 2 f b b b b b b 
-    b b b b b f 2 2 2 f b b b b b b 
-    b b b b b f 3 3 3 f b b b b b b 
     b b b b b f f f f f b b b b b b 
     b b b b b b b b b b b b b b b b 
     b b b b b b b b b b b b b b b b 
@@ -193,6 +231,7 @@ scene.cameraFollowSprite(mySprite)
 tiles.placeOnRandomTile(mySprite, assets.tile`myTile2`)
 color.startFade(color.GrayScale, color.originalPalette)
 tiles.coverAllTiles(assets.tile`myTile2`, assets.tile`myTile`)
+tiles.coverAllTiles(tiles.util.door1, assets.tile`myTile`)
 tools = [
 img`
     . 4 4 4 4 . . . . . . . . . . . 
